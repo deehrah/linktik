@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
+import env from '@/config/env';
+import { AppError } from '@/middleware/errorHandler.middleware';
 
 // Validation schemas
 export const signupSchema = z.object({
@@ -42,9 +42,10 @@ interface TokenPayload {
 }
 
 export class AuthService {
-  private jwtSecret = process.env.JWT_SECRET || 'secret';
-  private jwtExpiry = process.env.JWT_EXPIRES_IN || '1h';
-  private refreshExpiry = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
+  private jwtSecret = env.JWT_SECRET;
+  private jwtRefreshSecret = env.JWT_REFRESH_SECRET;
+  private jwtExpiry = env.JWT_EXPIRY;
+  private refreshExpiry = env.JWT_REFRESH_EXPIRY;
 
   async signup(input: SignupInput): Promise<AuthResponse> {
     // Check if user exists
@@ -53,7 +54,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new Error('Email already registered');
+      throw new AppError(409, 'Email already registered');
     }
 
     // Hash password
@@ -93,7 +94,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new AppError(401, 'Invalid email or password');
     }
 
     // Verify password
@@ -103,7 +104,7 @@ export class AuthService {
     );
 
     if (!isValidPassword) {
-      throw new Error('Invalid email or password');
+      throw new AppError(401, 'Invalid email or password');
     }
 
     // Generate tokens
@@ -128,7 +129,7 @@ export class AuthService {
     try {
       const decoded = jwt.verify(
         refreshToken,
-        this.jwtSecret
+        this.jwtRefreshSecret
       ) as TokenPayload;
 
       const user = await prisma.user.findUnique({
@@ -136,7 +137,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new Error('User not found');
+        throw new AppError(404, 'User not found');
       }
 
       const { accessToken } = this.generateTokens({
@@ -146,7 +147,8 @@ export class AuthService {
 
       return { accessToken };
     } catch (error) {
-      throw new Error('Invalid refresh token');
+      if (error instanceof AppError) throw error;
+      throw new AppError(401, 'Invalid refresh token');
     }
   }
 
@@ -155,7 +157,7 @@ export class AuthService {
       expiresIn: this.jwtExpiry,
     });
 
-    const refreshToken = jwt.sign(payload, this.jwtSecret, {
+    const refreshToken = jwt.sign(payload, this.jwtRefreshSecret, {
       expiresIn: this.refreshExpiry,
     });
 

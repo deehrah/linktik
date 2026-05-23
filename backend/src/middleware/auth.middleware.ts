@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import env from '@/config/env';
+import { AppError } from '@/middleware/errorHandler.middleware';
 
 interface TokenPayload {
   userId: string;
@@ -9,7 +11,7 @@ interface TokenPayload {
 declare global {
   namespace Express {
     interface Request {
-      user?: TokenPayload;
+      user?: TokenPayload & { id?: string };
     }
   }
 }
@@ -22,22 +24,25 @@ export const authMiddleware = (
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader?.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No token provided' });
+      throw new AppError(401, 'No authentication token provided');
     }
 
     const token = authHeader.substring(7);
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'secret'
-    ) as TokenPayload;
+    const decoded = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
 
-    req.user = decoded;
+    req.user = { ...decoded, id: decoded.userId };
     next();
   } catch (error) {
     if (error instanceof jwt.TokenExpiredError) {
-      return res.status(401).json({ error: 'Token expired' });
+      return next(new AppError(401, 'Token expired', true, 'TOKEN_EXPIRED'));
     }
-    return res.status(401).json({ error: 'Invalid token' });
+    if (error instanceof jwt.JsonWebTokenError) {
+      return next(new AppError(401, 'Invalid token', true, 'INVALID_TOKEN'));
+    }
+    if (error instanceof AppError) {
+      return next(error);
+    }
+    return next(new AppError(401, 'Authentication failed'));
   }
 };
 
@@ -50,14 +55,12 @@ export const optionalAuthMiddleware = (
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
-      const decoded = jwt.verify(
-        token,
-        process.env.JWT_SECRET || 'secret'
-      ) as TokenPayload;
-      req.user = decoded;
+      const decoded = jwt.verify(token, env.JWT_SECRET) as TokenPayload;
+      req.user = { ...decoded, id: decoded.userId };
     }
   } catch (error) {
     // Optional auth - continue even if token is invalid
+    // Just don't set user
   }
   next();
 };
