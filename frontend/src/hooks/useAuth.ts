@@ -1,0 +1,143 @@
+import { create } from 'zustand';
+import axios from 'axios';
+
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  planTier: string;
+}
+
+interface AuthState {
+  user: User | null;
+  accessToken: string | null;
+  isLoading: boolean;
+  error: string | null;
+  signup: (email: string, name: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  setAccessToken: (token: string) => void;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+export const useAuth = create<AuthState>((set) => ({
+  user: null,
+  accessToken: null,
+  isLoading: false,
+  error: null,
+
+  signup: async (email: string, name: string, password: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
+        email,
+        name,
+        password,
+      });
+
+      set({
+        user: response.data.user,
+        accessToken: response.data.accessToken,
+        isLoading: false,
+      });
+
+      // Store tokens in localStorage
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+    } catch (error: any) {
+      const message = error.response?.data?.error || 'Signup failed';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  login: async (email: string, password: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+        email,
+        password,
+      });
+
+      set({
+        user: response.data.user,
+        accessToken: response.data.accessToken,
+        isLoading: false,
+      });
+
+      // Store tokens in localStorage
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+    } catch (error: any) {
+      const message = error.response?.data?.error || 'Login failed';
+      set({ error: message, isLoading: false });
+      throw error;
+    }
+  },
+
+  logout: () => {
+    set({
+      user: null,
+      accessToken: null,
+    });
+
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+  },
+
+  setAccessToken: (token: string) => {
+    set({ accessToken: token });
+  },
+}));
+
+// Configure axios to include auth header
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Handle token refresh on 401
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config;
+
+    if (
+      error.response?.status === 401 &&
+      !config._retry &&
+      config.url !== `${API_BASE_URL}/api/auth/login`
+    ) {
+      config._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) throw new Error('No refresh token');
+
+        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+          refreshToken,
+        });
+
+        localStorage.setItem('accessToken', response.data.accessToken);
+        config.headers.Authorization = `Bearer ${response.data.accessToken}`;
+
+        return axios(config);
+      } catch (err) {
+        // Refresh failed, logout user
+        const { logout } = useAuth.getState();
+        logout();
+        return Promise.reject(err);
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);

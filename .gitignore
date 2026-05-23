@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Database
+*.db
+*.sqlite
+
+# Temporary files
+tmp/
+temp/
+
+# Redis
+dump.rdb
+
+# Prisma
+prisma/migrations/dev.db
+
+# Test and Debug files
+test-*.js
+debug-*.js
+*-test.js
+*-debug.js
+*.test.js
+*.spec.js
+
+# Documentation (except README.md)
+docs/

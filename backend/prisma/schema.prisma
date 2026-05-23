@@ -1,0 +1,446 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER MODELS ====================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String
+  passwordHash  String
+  avatar        String?
+  
+  // Account Status
+  emailVerified Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  
+  // Plan & Subscription
+  planTier      PlanTier  @default(FREE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  links         Link[]
+  qrCodes       QRCode[]
+  events        Event[]
+  subscriptions Subscription[]
+  
+  @@map("users")
+}
+
+enum PlanTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+// ==================== LINK MODELS ====================
+
+model Link {
+  id            String    @id @default(cuid())
+  userId        String
+  shortCode     String    @unique @db.VarChar(20)
+  originalUrl   String
+  title         String?
+  description   String?
+  
+  // Analytics
+  clickCount    Int       @default(0)
+  lastClickedAt DateTime?
+  
+  // Expiry
+  expiresAt     DateTime?
+  isExpired     Boolean   @default(false)
+  
+  // Settings
+  passwordHash  String?
+  isActive      Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clicks        AnalyticsClick[]
+  qrCode        QRCode?
+  
+  @@index([userId])
+  @@index([shortCode])
+  @@index([createdAt])
+  @@map("links")
+}
+
+// ==================== QR CODE MODELS ====================
+
+model QRCode {
+  id            String    @id @default(cuid())
+  userId        String
+  linkId        String?   @unique
+  data          String    // URL or text to encode
+  
+  // Generated Image (stored as data URL)
+  imageUrl      String
+  
+  // Customization
+  fgColor       String    @default("#000000")
+  bgColor       String    @default("#FFFFFF")
+  
+  // Analytics
+  scanCount     Int       @default(0)
+  lastScannedAt DateTime?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  link          Link?     @relation(fields: [linkId], references: [id], onDelete: SetNull)
+  scans         AnalyticsScan[]
+  
+  @@index([userId])
+  @@index([linkId])
+  @@map("qr_codes")
+}
+
+// ==================== ANALYTICS MODELS ====================
+
+model AnalyticsClick {
+  id              String   @id @default(cuid())
+  linkId          String
+  
+  // Metadata
+  ipAddress       String?
+  userAgent       String?
+  referer         String?
+  country         String?
+  city            String?
+  region          String?
+  device          String?  // mobile, desktop, tablet
+  deviceModel     String?
+  browser         String?
+  browserVersion  String?
+  os              String?
+  osVersion       String?
+  
+  clickedAt       DateTime @default(now())
+  
+  // Relations
+  link            Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  
+  @@index([linkId])
+  @@index([clickedAt])
+  @@map("analytics_clicks")
+}
+
+model AnalyticsScan {
+  id              String   @id @default(cuid())
+  qrCodeId        String
+  
+  // Metadata
+  ipAddress       String?
+  userAgent       String?
+  country         String?
+  city            String?
+  region          String?
+  device          String?
+  deviceModel     String?
+  browser         String?
+  browserVersion  String?
+  os              String?
+  osVersion       String?
+  
+  scannedAt       DateTime @default(now())
+  
+  // Relations
+  qrCode          QRCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+  
+  @@index([qrCodeId])
+  @@index([scannedAt])
+  @@map("analytics_scans")
+}
+
+// ==================== EVENT MODELS ====================
+
+model Event {
+  id            String         @id @default(cuid())
+  organizerId   String
+  name          String
+  slug          String         @unique
+  description   String?
+  posterUrl     String?
+  
+  // Event Details
+  dateTime      DateTime
+  venueId       String?
+  venueName     String
+  venueAddress  String?
+  category      String?  // Concert, Wedding, Conference, etc.
+  
+  // Status
+  status        EventStatus    @default(DRAFT)
+  isPublished   Boolean        @default(false)
+  
+  // Capacity & Attendance
+  capacity      Int?
+  attended      Int            @default(0)
+  
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  
+  // Relations
+  organizer     User           @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  ticketTypes   TicketType[]
+  orders        Order[]
+  tickets       Ticket[]
+  scanners      Scanner[]
+  entryLogs     EntryLog[]
+  
+  @@index([organizerId])
+  @@index([slug])
+  @@index([dateTime])
+  @@index([status])
+  @@map("events")
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  LIVE
+  ENDED
+  CANCELLED
+}
+
+model TicketType {
+  id            String   @id @default(cuid())
+  eventId       String
+  name          String   // "General", "VIP", etc.
+  description   String?
+  price         Float
+  
+  // Quantity Limits
+  quantityTotal Int
+  quantitySold  Int      @default(0)
+  quantityLeft  Int
+  
+  // Settings
+  isActive      Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets       Ticket[]
+  
+  @@index([eventId])
+  @@map("ticket_types")
+}
+
+// ==================== ORDER & TICKET MODELS ====================
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  eventId         String
+  
+  // Customer Info
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  
+  // Order Details
+  totalAmount     Float
+  serviceCharge   Float
+  amountPaid      Float         @default(0)
+  
+  // Payment Status
+  paymentStatus   PaymentStatus @default(PENDING)
+  paymentMethod   String?       // "paystack", etc.
+  paymentReference String?      // Paystack reference
+  
+  // Ticket Info
+  ticketCount     Int
+  
+  status          OrderStatus   @default(PENDING)
+  
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  // Relations
+  event           Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets         Ticket[]
+  
+  @@index([eventId])
+  @@index([orderNumber])
+  @@index([paymentStatus])
+  @@index([paymentReference])
+  @@index([customerEmail])
+  @@map("orders")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESSFUL
+  FAILED
+  REFUNDED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+model Ticket {
+  id            String        @id @default(cuid())
+  orderId       String
+  eventId       String
+  ticketTypeId  String
+  
+  // Ticket Info
+  ticketNumber  String        @unique
+  buyerName     String
+  buyerEmail    String
+  
+  // QR Code
+  qrCodeData    String        @unique // TKT:evt_123:ticket_001:checksum
+  qrCodeUrl     String?
+  
+  // Status
+  status        TicketStatus  @default(PENDING)
+  isUsed        Boolean       @default(false)
+  usedAt        DateTime?
+  usedBy        String?       // Scanner ID
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  // Relations
+  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  event         Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketType    TicketType    @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
+  entryLogs     EntryLog[]
+  
+  @@index([eventId])
+  @@index([orderId])
+  @@index([ticketNumber])
+  @@index([qrCodeData])
+  @@index([status])
+  @@index([buyerEmail])
+  @@map("tickets")
+}
+
+enum TicketStatus {
+  PENDING
+  VALID
+  USED
+  CANCELLED
+  REFUNDED
+}
+
+// ==================== SCANNER MODELS ====================
+
+model Scanner {
+  id            String   @id @default(cuid())
+  eventId       String
+  name          String
+  code          String   @unique
+  
+  // Authentication
+  passwordHash  String
+  
+  // Status
+  isActive      Boolean  @default(true)
+  lastUsedAt    DateTime?
+  
+  // Settings
+  canValidateOffline Boolean @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  // Relations
+  event         Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  entryLogs     EntryLog[]
+  
+  @@index([eventId])
+  @@index([code])
+  @@index([isActive])
+  @@map("scanners")
+}
+
+model EntryLog {
+  id          String   @id @default(cuid())
+  eventId     String
+  ticketId    String
+  scannerId   String
+  
+  // Entry Status
+  status      ScanStatus @default(SUCCESS)
+  message     String?
+  
+  scannedAt   DateTime @default(now())
+  
+  // Relations
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticket      Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  scanner     Scanner  @relation(fields: [scannerId], references: [id], onDelete: Cascade)
+  
+  @@index([eventId])
+  @@index([ticketId])
+  @@index([scannerId])
+  @@index([scannedAt])
+  @@map("entry_logs")
+}
+
+enum ScanStatus {
+  SUCCESS
+  INVALID
+  ALREADY_USED
+  CANCELLED
+  NOT_FOUND
+}
+
+// ==================== SUBSCRIPTION MODELS ====================
+
+model Subscription {
+  id            String    @id @default(cuid())
+  userId        String
+  planTier      PlanTier
+  
+  // Billing
+  billingCycle  BillingCycle
+  amount        Float
+  
+  // Status
+  status        String    @default("active")
+  
+  // Dates
+  startDate     DateTime  @default(now())
+  endDate       DateTime?
+  renewalDate   DateTime?
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relations
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}

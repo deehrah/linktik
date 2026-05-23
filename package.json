@@ -1,0 +1,22 @@
+{
+  "name": "linktik",
+  "version": "1.0.0",
+  "description": "LinkTik - QR Code & Link Management Platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\" \"npm run dev --workspace=scanner-app\"",
+    "build": "npm run build --workspace=backend && npm run build --workspace=frontend && npm run build --workspace=scanner-app",
+    "test": "concurrently \"npm run test --workspace=backend\" \"npm run test --workspace=frontend\"",
+    "lint": "concurrently \"npm run lint --workspace=backend\" \"npm run lint --workspace=frontend\" \"npm run lint --workspace=scanner-app\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\""
+  },
+  "workspaces": [
+    "backend",
+    "frontend",
+    "scanner-app"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "prettier": "^3.0.0"
+  }
+}
