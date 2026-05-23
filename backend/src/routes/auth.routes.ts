@@ -1,18 +1,21 @@
 import { Router } from 'express';
-import { AuthController } from '../controllers/AuthController';
-import { authMiddleware } from '../middleware/auth.middleware';
+import { AuthController } from '@/controllers/AuthController';
+import { authMiddleware } from '@/middleware/auth.middleware';
 
 const router = Router();
 const authController = new AuthController();
 
+/**
+ * Authentication Routes
+ */
+
 // Public endpoints
-router.post('/signup', (req, res) => authController.signup(req, res));
-router.post('/login', (req, res) => authController.login(req, res));
-router.post('/refresh', (req, res) => authController.refresh(req, res));
+router.post('/signup', authController.signup);
+router.post('/login', authController.login);
+router.post('/refresh', authController.refresh);
 
 // Protected endpoints
-router.get('/profile', authMiddleware, (req, res) =>
-  authController.getProfile(req, res)
-);
+router.get('/profile', authMiddleware, authController.getProfile);
 
 export default router;
+

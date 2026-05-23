@@ -4,69 +4,54 @@ import {
   signupSchema,
   loginSchema,
   refreshSchema,
-} from '../services/AuthService';
+} from '@/services/AuthService';
+import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware';
 
 const authService = new AuthService();
 
 export class AuthController {
-  async signup(req: Request, res: Response) {
-    try {
-      const input = signupSchema.parse(req.body);
-      const result = await authService.signup(input);
-      res.status(201).json(result);
-    } catch (error: any) {
-      if (error.name === 'ZodError') {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors,
-        });
-      }
-      res.status(400).json({ error: error.message });
-    }
-  }
+  signup = asyncHandler(async (req: Request, res: Response) => {
+    const input = signupSchema.parse(req.body);
+    const result = await authService.signup(input);
+    res.status(201).json({
+      success: true,
+      data: result,
+      message: 'Account created successfully',
+    });
+  });
 
-  async login(req: Request, res: Response) {
-    try {
-      const input = loginSchema.parse(req.body);
-      const result = await authService.login(input);
-      res.json(result);
-    } catch (error: any) {
-      if (error.name === 'ZodError') {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors,
-        });
-      }
-      res.status(401).json({ error: error.message });
-    }
-  }
+  login = asyncHandler(async (req: Request, res: Response) => {
+    const input = loginSchema.parse(req.body);
+    const result = await authService.login(input);
+    res.json({
+      success: true,
+      data: result,
+      message: 'Logged in successfully',
+    });
+  });
 
-  async refresh(req: Request, res: Response) {
-    try {
-      const input = refreshSchema.parse(req.body);
-      const result = await authService.refresh(input.refreshToken);
-      res.json(result);
-    } catch (error: any) {
-      if (error.name === 'ZodError') {
-        return res.status(400).json({
-          error: 'Validation error',
-          details: error.errors,
-        });
-      }
-      res.status(401).json({ error: error.message });
-    }
-  }
+  refresh = asyncHandler(async (req: Request, res: Response) => {
+    const input = refreshSchema.parse(req.body);
+    const result = await authService.refresh(input.refreshToken);
+    res.json({
+      success: true,
+      data: result,
+    });
+  });
 
-  async getProfile(req: Request, res: Response) {
-    try {
-      if (!req.user) {
-        return res.status(401).json({ error: 'Not authenticated' });
-      }
-
-      const user = await authService.getUserById(req.user.userId);
-      res.json(user);
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
+  getProfile = asyncHandler(async (req: Request, res: Response) => {
+    if (!req.user) {
+      throw new AppError(401, 'Authentication required');
     }
-  }
+
+    const user = await authService.getUserById(req.user.id);
+    if (!user) {
+      throw new AppError(404, 'User not found');
+    }
+
+    res.json({
+      success: true,
+      data: user,
+    });
+  });
 }

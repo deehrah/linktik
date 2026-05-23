@@ -21,7 +21,7 @@ export interface ErrorResponse {
     code: string;
     message: string;
     details?: any;
-    ...[key: string]: any;
+    [key: string]: any;
   };
 }
 
