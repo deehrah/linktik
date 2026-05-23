@@ -1,11 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
-import { LinkService } from '@/services/LinkService';
-import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware';
-import UAParser from 'ua-parser-js';
+import { LinkService } from '../services/LinkService';
+import { asyncHandler, AppError } from '../middleware/errorHandler.middleware';
+import { UAParser } from 'ua-parser-js';
 import geoip from 'geoip-lite';
 
 const linkService = new LinkService();
-const parser = new UAParser();
 
 export class LinkController {
   /**
@@ -136,7 +135,8 @@ export class LinkController {
 
     // Parse user agent
     const userAgent = req.headers['user-agent'] || '';
-    const ua = parser.setUA(userAgent).getResult();
+    const parser = new UAParser(userAgent);
+    const ua = parser.getResult();
 
     // Get geolocation from IP
     const clientIp =

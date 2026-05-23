@@ -452,9 +452,6 @@ export default function LinksPage() {
           </div>
         </div>
       )}
-    </div>
-  );
-}
 
       {/* Edit Link Modal */}
       {showEditModal && selectedLink && (

@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import prisma from '@/lib/prisma';
-import env from '@/config/env';
-import { AppError } from '@/middleware/errorHandler.middleware';
+import prisma from '../lib/prisma';
+import env from '../config/env';
+import { AppError } from '../middleware/errorHandler.middleware';
 
 // Validation schemas
 export const signupSchema = z.object({
@@ -39,6 +39,7 @@ export interface AuthResponse {
 interface TokenPayload {
   userId: string;
   email: string;
+  planTier: string;
 }
 
 export class AuthService {
@@ -73,6 +74,7 @@ export class AuthService {
     const { accessToken, refreshToken } = this.generateTokens({
       userId: user.id,
       email: user.email,
+      planTier: user.planTier,
     });
 
     return {
@@ -111,6 +113,7 @@ export class AuthService {
     const { accessToken, refreshToken } = this.generateTokens({
       userId: user.id,
       email: user.email,
+      planTier: user.planTier,
     });
 
     return {

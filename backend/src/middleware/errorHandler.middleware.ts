@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
-import { logger } from '@/lib/logger';
+import { logger } from '../lib/logger';
 
 export class AppError extends Error {
   constructor(
@@ -31,6 +31,7 @@ declare global {
     interface Request {
       user?: {
         id: string;
+        userId: string;
         email: string;
         planTier: string;
       };

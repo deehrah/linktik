@@ -1,6 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import RedisStore from 'rate-limit-redis';
-import redis from '@/lib/redis';
+import redis from '../lib/redis';
 
 // Auth endpoints - strict limit (5 attempts per 15 minutes)
 export const authLimiter = rateLimit({

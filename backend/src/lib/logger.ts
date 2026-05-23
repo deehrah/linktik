@@ -1,5 +1,5 @@
 import winston from 'winston';
-import env from '@/config/env';
+import env from '../config/env';
 
 const levels = {
   error: 0,
@@ -24,7 +24,7 @@ const format = winston.format.combine(
   winston.format.json()
 );
 
-const transports = [
+const transports: winston.transport[] = [
   // Error log
   new winston.transports.File({
     filename: 'logs/error.log',

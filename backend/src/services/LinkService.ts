@@ -1,8 +1,8 @@
 import { customAlphabet } from 'nanoid';
-import prisma from '@/lib/prisma';
-import redis from '@/lib/redis';
-import { AppError, asyncHandler } from '@/middleware/errorHandler.middleware';
-import { logger } from '@/lib/logger';
+import prisma from '../lib/prisma';
+import redis from '../lib/redis';
+import { AppError, asyncHandler } from '../middleware/errorHandler.middleware';
+import { logger } from '../lib/logger';
 import { z } from 'zod';
 
 // Validation schemas

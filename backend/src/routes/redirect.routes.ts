@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
-import { LinkService } from '@/services/LinkService';
-import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware';
-import { logger } from '@/lib/logger';
+import { LinkService } from '../services/LinkService';
+import { asyncHandler, AppError } from '../middleware/errorHandler.middleware';
+import { logger } from '../lib/logger';
 
 const router = Router();
 const linkService = new LinkService();

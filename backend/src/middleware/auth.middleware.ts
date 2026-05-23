@@ -1,17 +1,23 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import env from '@/config/env';
-import { AppError } from '@/middleware/errorHandler.middleware';
+import env from '../config/env';
+import { AppError } from '../middleware/errorHandler.middleware';
 
 interface TokenPayload {
   userId: string;
   email: string;
+  planTier: string;
 }
 
 declare global {
   namespace Express {
     interface Request {
-      user?: TokenPayload & { id?: string };
+      user?: {
+        id: string;
+        userId: string;
+        email: string;
+        planTier: string;
+      };
     }
   }
 }
