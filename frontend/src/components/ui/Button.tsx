@@ -4,6 +4,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
   size?: 'sm' | 'md' | 'lg';
   children: ReactNode;
+  isLoading?: boolean;
 }
 
 export default function Button({
@@ -11,6 +12,8 @@ export default function Button({
   size = 'md',
   className = '',
   children,
+  isLoading = false,
+  disabled = false,
   ...props
 }: ButtonProps) {
   const baseStyles = 'font-semibold rounded-xl transition-colors inline-flex items-center justify-center';
@@ -31,9 +34,17 @@ export default function Button({
   return (
     <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={isLoading || disabled}
       {...props}
     >
-      {children}
+      {isLoading ? (
+        <span className="flex items-center gap-2">
+          <span className="inline-block w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+          Loading...
+        </span>
+      ) : (
+        children
+      )}
     </button>
   );
 }
