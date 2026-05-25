@@ -59,6 +59,7 @@ async function main() {
       userId: user.id,
       linkId: link1.id,
       data: link1.originalUrl,
+      imageUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
       scanCount: 15,
     },
   });

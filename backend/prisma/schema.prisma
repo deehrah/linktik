@@ -33,6 +33,7 @@ model User {
   qrCodes       QRCode[]
   events        Event[]
   subscriptions Subscription[]
+  payments      Payment[]
   
   @@map("users")
 }
@@ -73,9 +74,10 @@ model Link {
   clicks        AnalyticsClick[]
   qrCode        QRCode?
   
-  @@index([userId])
-  @@index([shortCode])
-  @@index([createdAt])
+  // Indexes for optimal query performance
+  @@index([userId, createdAt(sort: Desc)]) // For user's link list
+  @@index([shortCode, isActive]) // For redirect queries
+  @@index([expiresAt]) // For link expiry cleanup jobs
   @@map("links")
 }
 
@@ -87,12 +89,17 @@ model QRCode {
   linkId        String?   @unique
   data          String    // URL or text to encode
   
-  // Generated Image (stored as data URL)
+  // Generated Image (stored on Cloudinary)
   imageUrl      String
+  cloudinaryPublicId String?  // Cloudinary public ID for management
   
   // Customization
   fgColor       String    @default("#000000")
   bgColor       String    @default("#FFFFFF")
+  format        String    @default("png") // png, svg, pdf
+  
+  // Metadata (JSON: stores size, errorCorrection, hasLogo, etc.)
+  metadata      Json?
   
   // Analytics
   scanCount     Int       @default(0)
@@ -136,8 +143,9 @@ model AnalyticsClick {
   // Relations
   link            Link     @relation(fields: [linkId], references: [id], onDelete: Cascade)
   
-  @@index([linkId])
-  @@index([clickedAt])
+  // Indexes for optimal query performance
+  @@index([linkId, clickedAt(sort: Desc)]) // For link analytics queries
+  @@index([country]) // For geographic analytics
   @@map("analytics_clicks")
 }
 
@@ -204,10 +212,10 @@ model Event {
   scanners      Scanner[]
   entryLogs     EntryLog[]
   
-  @@index([organizerId])
-  @@index([slug])
-  @@index([dateTime])
-  @@index([status])
+  // Indexes for optimal query performance
+  @@index([organizerId, status]) // For organizer's events
+  @@index([dateTime, status]) // For upcoming events
+  @@index([slug, status]) // For public event lookup
   @@map("events")
 }
 
@@ -331,12 +339,12 @@ model Ticket {
   ticketType    TicketType    @relation(fields: [ticketTypeId], references: [id], onDelete: Restrict)
   entryLogs     EntryLog[]
   
-  @@index([eventId])
-  @@index([orderId])
-  @@index([ticketNumber])
-  @@index([qrCodeData])
-  @@index([status])
-  @@index([buyerEmail])
+  // Indexes for optimal query performance
+  @@index([eventId, status]) // For event ticket list filtering
+  @@index([qrCodeData]) // For fast ticket validation by QR code
+  @@index([buyerEmail]) // For ticket lookup by buyer
+  @@index([orderId]) // For order lookups
+  @@index([ticketNumber]) // For ticket number lookups
   @@map("tickets")
 }
 
@@ -414,33 +422,81 @@ enum ScanStatus {
 // ==================== SUBSCRIPTION MODELS ====================
 
 model Subscription {
-  id            String    @id @default(cuid())
-  userId        String
-  planTier      PlanTier
+  id                    String    @id @default(cuid())
+  userId                String
+  paymentId             String?
+  planTier              PlanTier
   
   // Billing
-  billingCycle  BillingCycle
-  amount        Float
+  billingCycle          BillingCycle
+  amount                Float?
   
   // Status
-  status        String    @default("active")
+  status                String    @default("active")
+  
+  // Authorization for recurring charges
+  authorizationCode     String?
   
   // Dates
-  startDate     DateTime  @default(now())
-  endDate       DateTime?
-  renewalDate   DateTime?
+  currentPeriodStart    DateTime  @default(now())
+  currentPeriodEnd      DateTime
   
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  startDate             DateTime  @default(now())
+  endDate               DateTime?
+  renewalDate           DateTime?
+  
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
   
   // Relations
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment               Payment?  @relation(fields: [paymentId], references: [id])
   
   @@index([userId])
+  @@index([status])
   @@map("subscriptions")
 }
 
 enum BillingCycle {
   MONTHLY
   YEARLY
+}
+
+model Payment {
+  id                      String    @id @default(cuid())
+  userId                  String
+  reference               String    @unique
+  amount                  Int       // in kobo
+  planTier                String    // "pro" or "advanced"
+  
+  // Status - using TransactionStatus instead of PaymentStatus (which is used by Order)
+  status                  TransactionStatus @default(PENDING) // pending, completed, failed
+  
+  // Paystack Details
+  paystackAccessCode      String?
+  paystackAuthorizationUrl String?
+  authorizationCode       String?   // For recurring charges
+  
+  // Metadata
+  metadata                Json?
+  
+  completedAt             DateTime?
+  
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  
+  // Relations
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptions           Subscription[]
+  
+  @@index([userId])
+  @@index([reference])
+  @@index([status])
+  @@map("payments")
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
 }
