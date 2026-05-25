@@ -62,7 +62,7 @@ export default function LinksPage() {
     try {
       await linksApi.create({
         originalUrl: formData.originalUrl,
-        shortCode: formData.shortCode || undefined,
+        customSlug: formData.shortCode || undefined,
         title: formData.title || undefined,
       });
       

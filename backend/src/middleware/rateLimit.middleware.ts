@@ -4,8 +4,8 @@ import redis from '../lib/redis';
 
 // Auth endpoints - strict limit (5 attempts per 15 minutes)
 export const authLimiter = rateLimit({
-  store: new RedisStore({
-    client: redis as any,
+  store: new (RedisStore as any)({
+    client: redis,
     prefix: 'rl:auth:',
   }),
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -18,8 +18,8 @@ export const authLimiter = rateLimit({
 
 // API endpoints - moderate limit (100 requests per minute)
 export const apiLimiter = rateLimit({
-  store: new RedisStore({
-    client: redis as any,
+  store: new (RedisStore as any)({
+    client: redis,
     prefix: 'rl:api:',
   }),
   windowMs: 60 * 1000, // 1 minute
@@ -32,8 +32,8 @@ export const apiLimiter = rateLimit({
 
 // Redirect endpoint - very permissive (1000 per minute, as these are public)
 export const redirectLimiter = rateLimit({
-  store: new RedisStore({
-    client: redis as any,
+  store: new (RedisStore as any)({
+    client: redis,
     prefix: 'rl:redirect:',
   }),
   windowMs: 60 * 1000,
@@ -46,8 +46,8 @@ export const redirectLimiter = rateLimit({
 
 // Webhook endpoint - special handling for Paystack signatures
 export const webhookLimiter = rateLimit({
-  store: new RedisStore({
-    client: redis as any,
+  store: new (RedisStore as any)({
+    client: redis,
     prefix: 'rl:webhook:',
   }),
   windowMs: 60 * 1000,

@@ -4,20 +4,38 @@ import redis from '../lib/redis';
 import { AppError, asyncHandler } from '../middleware/errorHandler.middleware';
 import { logger } from '../lib/logger';
 import { z } from 'zod';
+import {
+  CACHE_TTL,
+  RESERVED_SLUGS,
+  NANOID_CONFIG,
+  LINK_CONSTRAINTS,
+  ANALYTICS_CONFIG,
+  PLAN_FEATURES,
+} from '../config/constants';
 
 // Validation schemas
 const createLinkSchema = z.object({
   originalUrl: z.string().url('Invalid URL'),
-  customSlug: z.string().min(3).max(50).optional(),
-  title: z.string().max(200).optional(),
-  description: z.string().max(500).optional(),
+  customSlug: z
+    .string()
+    .min(LINK_CONSTRAINTS.CUSTOM_SLUG_MIN_LENGTH)
+    .max(LINK_CONSTRAINTS.CUSTOM_SLUG_MAX_LENGTH)
+    .optional(),
+  title: z.string().max(LINK_CONSTRAINTS.TITLE_MAX_LENGTH).optional(),
+  description: z
+    .string()
+    .max(LINK_CONSTRAINTS.DESCRIPTION_MAX_LENGTH)
+    .optional(),
   passwordHash: z.string().optional(),
   expiresAt: z.string().datetime().optional(),
 });
 
 const updateLinkSchema = z.object({
-  title: z.string().max(200).optional(),
-  description: z.string().max(500).optional(),
+  title: z.string().max(LINK_CONSTRAINTS.TITLE_MAX_LENGTH).optional(),
+  description: z
+    .string()
+    .max(LINK_CONSTRAINTS.DESCRIPTION_MAX_LENGTH)
+    .optional(),
   isActive: z.boolean().optional(),
 });
 
@@ -26,8 +44,8 @@ type UpdateLinkInput = z.infer<typeof updateLinkSchema>;
 
 // Generate short codes
 const nanoid = customAlphabet(
-  'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-  6
+  NANOID_CONFIG.ALPHABET,
+  NANOID_CONFIG.SHORT_CODE_LENGTH
 );
 
 export class LinkService {
@@ -52,7 +70,7 @@ export class LinkService {
 
     if (validated.customSlug) {
       // Check if user can use custom codes
-      const canUseCustom = ['PRO', 'ENTERPRISE'].includes(user.planTier);
+      const canUseCustom = PLAN_FEATURES[user.planTier]?.CUSTOM_CODES_ALLOWED || false;
       if (!canUseCustom) {
         throw new AppError(
           403,
@@ -100,8 +118,8 @@ export class LinkService {
       },
     });
 
-    // Cache in Redis for fast redirects (24 hours)
-    await this.cacheLink(shortCode, validated.originalUrl, 86400);
+    // Cache in Redis for fast redirects
+    await this.cacheLink(shortCode, validated.originalUrl, CACHE_TTL.LINK);
 
     logger.info('Link created', {
       linkId: link.id,
@@ -159,7 +177,7 @@ export class LinkService {
     }
 
     // Cache for future requests
-    await this.cacheLink(shortCode, link.originalUrl, 86400);
+    await this.cacheLink(shortCode, link.originalUrl, CACHE_TTL.LINK);
 
     const result = {
       originalUrl: link.originalUrl,
@@ -345,9 +363,9 @@ export class LinkService {
     // Update click count in-memory first for performance
     await redis.incr(`clicks:${link.id}`);
 
-    // Batch write to database every 10 clicks
+    // Batch write to database every N clicks
     const clickCount = await redis.get(`clicks:${link.id}`);
-    if (parseInt(clickCount as string) % 10 === 0) {
+    if (parseInt(clickCount as string) % ANALYTICS_CONFIG.CLICK_BATCH_SIZE === 0) {
       // Write to database asynchronously
       this.flushClicksToDatabase(link.id).catch((err) => {
         logger.error('Failed to flush clicks', { linkId: link.id, error: err });
@@ -480,38 +498,7 @@ export class LinkService {
       );
     }
 
-    const RESERVED_WORDS = [
-      'api',
-      'admin',
-      'dashboard',
-      'login',
-      'signup',
-      'logout',
-      'events',
-      'tickets',
-      'qr',
-      'links',
-      'analytics',
-      'settings',
-      'help',
-      'support',
-      'pricing',
-      'about',
-      'contact',
-      'terms',
-      'privacy',
-      'blog',
-      'docs',
-      'status',
-      'health',
-      'redirect',
-      'shorten',
-      'create',
-      'delete',
-      'update',
-    ];
-
-    if (RESERVED_WORDS.includes(slug.toLowerCase())) {
+    if ((RESERVED_SLUGS as readonly string[]).includes(slug.toLowerCase())) {
       throw new AppError(400, 'This short code is reserved and cannot be used');
     }
   }
@@ -521,9 +508,8 @@ export class LinkService {
    */
   private async generateUniqueShortCode(): Promise<string> {
     let attempts = 0;
-    const MAX_ATTEMPTS = 5;
 
-    while (attempts < MAX_ATTEMPTS) {
+    while (attempts < NANOID_CONFIG.MAX_COLLISION_ATTEMPTS) {
       const code = nanoid();
 
       const existing = await prisma.link.findUnique({
@@ -537,10 +523,10 @@ export class LinkService {
       attempts++;
     }
 
-    // Fallback to 8 characters if collision persists
+    // Fallback to longer code if collision persists
     const longNanoid = customAlphabet(
-      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
-      8
+      NANOID_CONFIG.ALPHABET,
+      NANOID_CONFIG.FALLBACK_LENGTH
     );
     return longNanoid();
   }

@@ -1,10 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+
+export const dynamic = 'force-dynamic';
 
 export default function TestPage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string>('');
+  const [tokenExists, setTokenExists] = useState<boolean>(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setTokenExists(!!localStorage.getItem('accessToken'));
+    setHydrated(true);
+  }, []);
 
   const testAPI = async () => {
     try {
@@ -67,12 +76,18 @@ export default function TestPage() {
 
         <div className="mt-8 bg-[#1E293B] border border-[#334155] rounded-xl p-4">
           <h3 className="text-white font-bold mb-2">Debug Info:</h3>
-          <p className="text-[#8E9CB1] text-sm">
-            Token exists: {localStorage.getItem('accessToken') ? 'Yes' : 'No'}
-          </p>
-          <p className="text-[#8E9CB1] text-sm">
-            API URL: http://localhost:5000/api/links
-          </p>
+          {hydrated ? (
+            <>
+              <p className="text-[#8E9CB1] text-sm">
+                Token exists: {tokenExists ? 'Yes' : 'No'}
+              </p>
+              <p className="text-[#8E9CB1] text-sm">
+                API URL: http://localhost:5000/api/links
+              </p>
+            </>
+          ) : (
+            <p className="text-[#8E9CB1] text-sm">Loading...</p>
+          )}
         </div>
       </div>
     </div>

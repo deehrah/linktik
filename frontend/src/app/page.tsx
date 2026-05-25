@@ -52,7 +52,7 @@ export default function Home() {
     type();
 
     return () => clearTimeout(timeout);
-  }, [currentWordIndex]);
+  }, [currentWordIndex, words]);
 
   const handleShorten = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -160,7 +160,7 @@ export default function Home() {
               )}
             </form>
             <p className="mt-4 text-sm text-[#8E9CB1]">
-              By clicking "Shorten", you agree to our Terms of Service and Privacy Policy
+              By clicking &quot;Shorten&quot;, you agree to our Terms of Service and Privacy Policy
             </p>
           </div>
 

@@ -70,23 +70,7 @@ export class AuthService {
       },
     });
 
-    // Generate tokens
-    const { accessToken, refreshToken } = this.generateTokens({
-      userId: user.id,
-      email: user.email,
-      planTier: user.planTier,
-    });
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        planTier: user.planTier,
-      },
-      accessToken,
-      refreshToken,
-    };
+    return this.formatAuthResponse(user);
   }
 
   async login(input: LoginInput): Promise<AuthResponse> {
@@ -109,23 +93,7 @@ export class AuthService {
       throw new AppError(401, 'Invalid email or password');
     }
 
-    // Generate tokens
-    const { accessToken, refreshToken } = this.generateTokens({
-      userId: user.id,
-      email: user.email,
-      planTier: user.planTier,
-    });
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        planTier: user.planTier,
-      },
-      accessToken,
-      refreshToken,
-    };
+    return this.formatAuthResponse(user);
   }
 
   async refresh(refreshToken: string): Promise<{ accessToken: string }> {
@@ -146,6 +114,7 @@ export class AuthService {
       const { accessToken } = this.generateTokens({
         userId: user.id,
         email: user.email,
+        planTier: user.planTier,
       });
 
       return { accessToken };
@@ -155,14 +124,38 @@ export class AuthService {
     }
   }
 
-  private generateTokens(payload: TokenPayload) {
-    const accessToken = jwt.sign(payload, this.jwtSecret, {
-      expiresIn: this.jwtExpiry,
+  /**
+   * Format auth response with user data and tokens
+   */
+  private formatAuthResponse(
+    user: { id: string; email: string; name: string; planTier: string }
+  ): AuthResponse {
+    const { accessToken, refreshToken } = this.generateTokens({
+      userId: user.id,
+      email: user.email,
+      planTier: user.planTier,
     });
 
-    const refreshToken = jwt.sign(payload, this.jwtRefreshSecret, {
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        planTier: user.planTier,
+      },
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  private generateTokens(payload: TokenPayload) {
+    const accessToken = jwt.sign(payload, this.jwtSecret as string, {
+      expiresIn: this.jwtExpiry,
+    } as any);
+
+    const refreshToken = jwt.sign(payload, this.jwtRefreshSecret as string, {
       expiresIn: this.refreshExpiry,
-    });
+    } as any);
 
     return { accessToken, refreshToken };
   }
