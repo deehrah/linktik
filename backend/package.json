@@ -17,6 +17,9 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "prisma studio"
   },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
   "keywords": [
     "linktik",
     "api",
@@ -28,10 +31,12 @@
   "dependencies": {
     "@prisma/client": "^5.0.0",
     "@types/ioredis": "^4.28.10",
-    "axios": "^1.6.0",
+    "axios": "^1.16.1",
     "bcrypt": "^5.1.0",
     "bull": "^4.11.4",
+    "cloudinary": "^2.10.0",
     "cors": "^2.8.5",
+    "crypto": "^1.0.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
@@ -41,11 +46,13 @@
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
+    "paystack": "^2.0.1",
     "prisma": "^5.0.0",
     "qrcode": "^1.5.4",
     "rate-limit-redis": "^4.1.5",
     "redis": "^4.6.10",
-    "sharp": "^0.33.0",
+    "sanitize-html": "^2.17.4",
+    "sharp": "^0.33.5",
     "ua-parser-js": "^2.0.10",
     "uuid": "^9.0.1",
     "winston": "^3.11.0",
@@ -60,6 +67,8 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/morgan": "^1.9.10",
     "@types/node": "^20.10.0",
+    "@types/qrcode": "^1.5.6",
+    "@types/sanitize-html": "^2.16.1",
     "@types/supertest": "^6.0.2",
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^6.15.0",

@@ -1,13 +1,20 @@
+import 'dotenv/config';
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import env from './config/env';
 import { logger } from './lib/logger';
+import { sanitizeInput } from './middleware/sanitize.middleware';
 import authRoutes from './routes/auth.routes';
 import linkRoutes from './routes/link.routes';
 import qrcodeRoutes from './routes/qrcode.routes';
+import analyticsRoutes from './routes/analytics.routes';
+import paymentRoutes from './routes/payment.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 import eventRoutes from './routes/event.routes';
+import ticketRoutes from './routes/tickets.routes';
+import webhookRoutes from './routes/webhook.routes';
 import redirectRoutes from './routes/redirect.routes';
 import { authMiddleware } from './middleware/auth.middleware';
 import {
@@ -34,6 +41,7 @@ app.use(
 app.use(helmet());
 app.use(morgan('combined'));
 app.use(apiLimiter);
+app.use(sanitizeInput); // Apply input sanitization to remove XSS attacks
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -76,7 +84,14 @@ app.get('/api-docs', (req: Request, res: Response) => {
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/links', apiLimiter, authMiddleware, linkRoutes);
 app.use('/api/qrcodes', apiLimiter, authMiddleware, qrcodeRoutes);
-app.use('/api/events', apiLimiter, authMiddleware, eventRoutes);
+app.use('/api/analytics', apiLimiter, authMiddleware, analyticsRoutes);
+app.use('/api/payments', apiLimiter, authMiddleware, paymentRoutes);
+app.use('/api/subscriptions', apiLimiter, authMiddleware, subscriptionRoutes);
+app.use('/api/events', apiLimiter, eventRoutes);
+app.use('/api/tickets', apiLimiter, ticketRoutes);
+
+// Public Webhook Routes (no auth required)
+app.use('/webhooks', webhookRoutes);
 
 // Public redirect routes (must be after API routes)
 app.use('/', redirectLimiter, redirectRoutes);
