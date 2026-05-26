@@ -2,6 +2,10 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  eslint: {
+    // re-enable ESLint during builds; address lint issues instead of ignoring
+    ignoreDuringBuilds: false,
+  },
   images: {
     unoptimized: true,
   },

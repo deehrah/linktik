@@ -45,9 +45,9 @@ export default function DashboardPage() {
       console.log('🔍 Fetching dashboard data...');
       
       const [links, qrCodes, events] = await Promise.all([
-        linksApi.getAll(),
-        qrCodesApi.getAll(),
-        eventsApi.getAll(),
+        linksApi.getAll<RecentLink[]>(),
+        qrCodesApi.getAll<any[]>(),
+        eventsApi.getAll<any[]>(),
       ]);
 
       console.log('✅ Data fetched:', { links, qrCodes, events });
@@ -105,9 +105,9 @@ export default function DashboardPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              <div className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
+              <Link href="/dashboard/profile" className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
                 U
-              </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -238,7 +238,11 @@ export default function DashboardPage() {
           ) : recentLinks.length > 0 ? (
             <div className="space-y-3">
               {recentLinks.map((link) => (
-                <div key={link.id} className="flex items-center justify-between p-4 bg-[#0F172A] border border-[#334155] rounded-xl hover:border-[#28C88C] transition-colors">
+                <Link
+                  key={link.id}
+                  href={`/dashboard/links/${link.id}`}
+                  className="flex items-center justify-between p-4 bg-[#0F172A] border border-[#334155] rounded-xl hover:border-[#28C88C] transition-colors"
+                >
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-white truncate">{link.title || 'Untitled Link'}</h3>
                     <p className="text-sm text-[#8E9CB1] truncate">linktik.io/{link.shortCode}</p>
@@ -248,13 +252,13 @@ export default function DashboardPage() {
                       <p className="text-sm font-semibold text-white">{link.clickCount}</p>
                       <p className="text-xs text-[#8E9CB1]">clicks</p>
                     </div>
-                    <button className="p-2 text-[#8E9CB1] hover:text-white transition-colors">
+                    <span className="p-2 text-[#8E9CB1] hover:text-white transition-colors">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
                       </svg>
-                    </button>
+                    </span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

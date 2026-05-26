@@ -412,8 +412,8 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">Features</Link></li>
-                <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">Pricing</Link></li>
+                <li><Link href="/features" className="text-[#8E9CB1] hover:text-white transition-colors">Features</Link></li>
+                <li><Link href="/pricing" className="text-[#8E9CB1] hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">API</Link></li>
                 <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">Integrations</Link></li>
               </ul>
@@ -430,10 +430,10 @@ export default function Home() {
             <div>
               <h4 className="font-semibold text-white mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">About</Link></li>
-                <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">Contact</Link></li>
-                <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">Privacy</Link></li>
-                <li><Link href="#" className="text-[#8E9CB1] hover:text-white transition-colors">Terms</Link></li>
+                <li><Link href="/about" className="text-[#8E9CB1] hover:text-white transition-colors">About</Link></li>
+                <li><Link href="/contact" className="text-[#8E9CB1] hover:text-white transition-colors">Contact</Link></li>
+                <li><Link href="/privacy" className="text-[#8E9CB1] hover:text-white transition-colors">Privacy</Link></li>
+                <li><Link href="/terms" className="text-[#8E9CB1] hover:text-white transition-colors">Terms</Link></li>
               </ul>
             </div>
           </div>

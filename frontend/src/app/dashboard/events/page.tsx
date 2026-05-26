@@ -34,7 +34,7 @@ export default function EventsPage() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      const data = await eventsApi.getAll();
+      const data = await eventsApi.getAll<EventData[]>();
       setEvents(data);
     } catch (error) {
       console.error('Error fetching events:', error);
@@ -79,9 +79,9 @@ export default function EventsPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              <div className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
+              <Link href="/dashboard/profile" className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
                 U
-              </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -121,6 +121,7 @@ export default function EventsPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
                     </svg>
                   </div>
+                  <Link href={`/dashboard/events/${event.id}`} className="block">
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <h3 className="font-bold text-white text-lg">{event.name}</h3>
@@ -170,6 +171,7 @@ export default function EventsPage() {
                       </button>
                     </div>
                   </div>
+                  </Link>
                 </div>
               ))}
             </div>

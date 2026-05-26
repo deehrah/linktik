@@ -30,7 +30,7 @@ export default function QRCodesPage() {
   const fetchQRCodes = async () => {
     try {
       setLoading(true);
-      const data = await qrCodesApi.getAll();
+      const data = await qrCodesApi.getAll<QRCodeData[]>();
       setQrCodes(data);
     } catch (error) {
       console.error('Error fetching QR codes:', error);
@@ -75,9 +75,9 @@ export default function QRCodesPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              <div className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
+              <Link href="/dashboard/profile" className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
                 U
-              </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -111,7 +111,8 @@ export default function QRCodesPage() {
           ) : qrCodes.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {qrCodes.map((qr) => (
-                <div key={qr.id} className="bg-[#0F172A] border border-[#334155] rounded-xl p-6 hover:border-[#28C88C] transition-colors">
+                <Link key={qr.id} href={`/dashboard/qr-codes/${qr.id}`} className="block">
+                <div className="bg-[#0F172A] border border-[#334155] rounded-xl p-6 hover:border-[#28C88C] transition-colors">
                   <div className="flex items-center justify-center mb-4 bg-white rounded-lg p-4">
                     <img src={qr.imageUrl} alt="QR Code" className="w-48 h-48" />
                   </div>
@@ -142,6 +143,7 @@ export default function QRCodesPage() {
                     </div>
                   </div>
                 </div>
+                </Link>
               ))}
             </div>
           ) : (

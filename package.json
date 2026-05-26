@@ -16,6 +16,7 @@
     "scanner-app"
   ],
   "devDependencies": {
+    "@swc/core": "^1.15.40",
     "concurrently": "^8.2.0",
     "prettier": "^3.0.0"
   }

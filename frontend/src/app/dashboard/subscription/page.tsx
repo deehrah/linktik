@@ -37,15 +37,15 @@ export default function SubscriptionPage() {
     try {
       setLoading(true)
       const [currentRes, historyRes] = await Promise.all([
-        subscriptionsApi.getCurrent(),
-        subscriptionsApi.getHistory(),
+        subscriptionsApi.getCurrent<Subscription | null>(),
+        subscriptionsApi.getHistory<SubscriptionHistory[]>(),
       ])
 
-      if (currentRes.data) {
-        setCurrentSubscription(currentRes.data)
+      if (currentRes) {
+        setCurrentSubscription(currentRes)
       }
-      if (historyRes.data) {
-        setHistory(historyRes.data)
+      if (historyRes) {
+        setHistory(historyRes)
       }
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load subscription')

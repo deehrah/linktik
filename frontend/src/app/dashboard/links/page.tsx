@@ -39,7 +39,7 @@ export default function LinksPage() {
   const fetchLinks = async () => {
     try {
       setLoading(true);
-      const data = await linksApi.getAll();
+      const data = await linksApi.getAll<LinkData[]>();
       setLinks(data);
     } catch (error) {
       console.error('Error fetching links:', error);
@@ -191,9 +191,9 @@ export default function LinksPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                 </svg>
               </button>
-              <div className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
+              <Link href="/dashboard/profile" className="w-8 h-8 bg-[#28C88C] rounded-full flex items-center justify-center text-white font-semibold cursor-pointer">
                 U
-              </div>
+              </Link>
             </div>
           </div>
         </div>
@@ -298,6 +298,15 @@ export default function LinksPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/dashboard/links/${link.id}`}
+                            className="p-2 text-[#8E9CB1] hover:text-[#28C88C] transition-colors"
+                            title="View details"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12h2m4 0a8.99 8.99 0 01-9 9 8.99 8.99 0 01-9-9 8.99 8.99 0 019-9 8.99 8.99 0 019 9zm-9 4v-4m0 0V8m0 4h4m-4 0H8" />
+                            </svg>
+                          </Link>
                           <button 
                             onClick={() => copyToClipboard(link.shortCode)}
                             className="p-2 text-[#8E9CB1] hover:text-[#28C88C] transition-colors"

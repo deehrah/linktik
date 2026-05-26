@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosInstance, AxiosError, AxiosResponse } from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -13,6 +13,11 @@ const api: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+const unwrapResponseData = <T = any>(response: AxiosResponse): T => {
+  const payload = (response && (response.data as any)) ?? undefined;
+  return ((payload && (payload.data ?? payload)) as unknown) as T;
+};
 
 /**
  * Request interceptor: Add authentication token to all requests
@@ -112,81 +117,76 @@ api.interceptors.response.use(
 
 // Links API
 export const linksApi = {
-  getAll: (page = 1, limit = 20) =>
-    api.get('/links', { params: { page, limit } }).then((r) => r.data),
-  getOne: (id: string) => api.get(`/links/${id}`).then((r) => r.data),
-  create: (data: { originalUrl: string; customSlug?: string; title?: string }) =>
-    api.post('/links', data).then((r) => r.data),
-  update: (id: string, data: { originalUrl?: string; title?: string }) =>
-    api.put(`/links/${id}`, data).then((r) => r.data),
-  delete: (id: string) => api.delete(`/links/${id}`).then((r) => r.data),
-  getAnalytics: (id: string, days = 30) =>
-    api.get(`/links/${id}/analytics`, { params: { days } }).then((r) => r.data),
+  getAll: <T = any>(page = 1, limit = 20): Promise<T> =>
+    api.get('/links', { params: { page, limit } }).then((r) => unwrapResponseData<T>(r)),
+  getOne: <T = any>(id: string): Promise<T> => api.get(`/links/${id}`).then((r) => unwrapResponseData<T>(r)),
+  create: <T = any>(data: { originalUrl: string; customSlug?: string; title?: string }): Promise<T> =>
+    api.post('/links', data).then((r) => unwrapResponseData<T>(r)),
+  update: <T = any>(id: string, data: { originalUrl?: string; title?: string }): Promise<T> =>
+    api.put(`/links/${id}`, data).then((r) => unwrapResponseData<T>(r)),
+  delete: <T = any>(id: string): Promise<T> => api.delete(`/links/${id}`).then((r) => unwrapResponseData<T>(r)),
+  getAnalytics: <T = any>(id: string, days = 30): Promise<T> =>
+    api.get(`/links/${id}/analytics`, { params: { days } }).then((r) => unwrapResponseData<T>(r)),
 };
 
 // QR Codes API
 export const qrCodesApi = {
-  getAll: () => api.get('/qrcodes').then((r) => r.data),
-  getOne: (id: string) => api.get(`/qrcodes/${id}`).then((r) => r.data),
-  create: (data: { data: string; linkId?: string; fgColor?: string; bgColor?: string }) =>
-    api.post('/qrcodes', data).then((r) => r.data),
-  update: (id: string, data: { fgColor?: string; bgColor?: string }) =>
-    api.put(`/qrcodes/${id}`, data).then((r) => r.data),
-  delete: (id: string) => api.delete(`/qrcodes/${id}`).then((r) => r.data),
+  getAll: <T = any>(): Promise<T> => api.get('/qrcodes').then((r) => unwrapResponseData<T>(r)),
+  getOne: <T = any>(id: string): Promise<T> => api.get(`/qrcodes/${id}`).then((r) => unwrapResponseData<T>(r)),
+  create: <T = any>(data: { data: string; linkId?: string; fgColor?: string; bgColor?: string }): Promise<T> =>
+    api.post('/qrcodes', data).then((r) => unwrapResponseData<T>(r)),
+  update: <T = any>(id: string, data: { fgColor?: string; bgColor?: string }): Promise<T> =>
+    api.put(`/qrcodes/${id}`, data).then((r) => unwrapResponseData<T>(r)),
+  delete: <T = any>(id: string): Promise<T> => api.delete(`/qrcodes/${id}`).then((r) => unwrapResponseData<T>(r)),
 };
 
 // Auth API
 export const authApi = {
-  signup: (data: { email: string; name: string; password: string }) =>
-    api.post('/auth/signup', data).then((r) => r.data),
-  login: (data: { email: string; password: string }) =>
-    api.post('/auth/login', data).then((r) => r.data),
-  refresh: (refreshToken: string) =>
-    api.post('/auth/refresh', { refreshToken }).then((r) => r.data),
-  logout: () => api.post('/auth/logout', {}).then((r) => r.data),
+  signup: <T = any>(data: { email: string; name: string; password: string }): Promise<T> =>
+    api.post('/auth/signup', data).then((r) => unwrapResponseData<T>(r)),
+  login: <T = any>(data: { email: string; password: string }): Promise<T> =>
+    api.post('/auth/login', data).then((r) => unwrapResponseData<T>(r)),
+  refresh: <T = any>(refreshToken: string): Promise<T> =>
+    api.post('/auth/refresh', { refreshToken }).then((r) => unwrapResponseData<T>(r)),
+  logout: <T = any>(): Promise<T> => api.post('/auth/logout', {}).then((r) => unwrapResponseData<T>(r)),
 };
 
 // User API
 export const userApi = {
-  getProfile: () => api.get('/users/profile').then((r) => r.data),
-  updateProfile: (data: { name?: string; email?: string }) =>
-    api.put('/users/profile', data).then((r) => r.data),
+  getProfile: <T = any>(): Promise<T> => api.get('/users/profile').then((r) => unwrapResponseData<T>(r)),
+  updateProfile: <T = any>(data: { name?: string; email?: string }): Promise<T> =>
+    api.put('/users/profile', data).then((r) => unwrapResponseData<T>(r)),
 };
 
 // Events API (if needed)
 export const eventsApi = {
-  getAll: (page = 1, limit = 20) =>
-    api.get('/events', { params: { page, limit } }).then((r) => r.data),
-  getOne: (id: string) => api.get(`/events/${id}`).then((r) => r.data),
-  create: (data: any) => api.post('/events', data).then((r) => r.data),
-  update: (id: string, data: any) => api.put(`/events/${id}`, data).then((r) => r.data),
-  delete: (id: string) => api.delete(`/events/${id}`).then((r) => r.data),
+  getAll: <T = any>(page = 1, limit = 20): Promise<T> =>
+    api.get('/events', { params: { page, limit } }).then((r) => unwrapResponseData<T>(r)),
+  getOne: <T = any>(id: string): Promise<T> => api.get(`/events/${id}`).then((r) => unwrapResponseData<T>(r)),
+  create: <T = any>(data: any): Promise<T> => api.post('/events', data).then((r) => unwrapResponseData<T>(r)),
+  update: <T = any>(id: string, data: any): Promise<T> => api.put(`/events/${id}`, data).then((r) => unwrapResponseData<T>(r)),
+  delete: <T = any>(id: string): Promise<T> => api.delete(`/events/${id}`).then((r) => unwrapResponseData<T>(r)),
 };
 
 // Payments API
 export const paymentsApi = {
-  initializePayment: (planTier: string, billingCycle?: string) =>
-    api.post('/payments/initialize', { planTier, billingCycle }).then((r) => r.data),
-  verifyPayment: (reference: string) =>
-    api.post('/payments/verify', { reference }).then((r) => r.data),
-  getPaymentHistory: (limit = 10) =>
-    api.get('/payments/history', { params: { limit } }).then((r) => r.data),
-  checkFeatureAccess: (feature: string) =>
-    api.get(`/payments/feature-check/${feature}`).then((r) => r.data),
+  initializePayment: <T = any>(planTier: string, billingCycle?: string): Promise<T> =>
+    api.post('/payments/initialize', { planTier, billingCycle }).then((r) => unwrapResponseData<T>(r)),
+  verifyPayment: <T = any>(reference: string): Promise<T> =>
+    api.post('/payments/verify', { reference }).then((r) => unwrapResponseData<T>(r)),
+  getPaymentHistory: <T = any>(limit = 10): Promise<T> =>
+    api.get('/payments/history', { params: { limit } }).then((r) => unwrapResponseData<T>(r)),
+  checkFeatureAccess: <T = any>(feature: string): Promise<T> =>
+    api.get(`/payments/feature-check/${feature}`).then((r) => unwrapResponseData<T>(r)),
 };
 
 // Subscriptions API
 export const subscriptionsApi = {
-  getCurrent: () =>
-    api.get('/subscriptions/current').then((r) => r.data),
-  getRenewalDate: () =>
-    api.get('/subscriptions/renewal-date').then((r) => r.data),
-  getHistory: () =>
-    api.get('/subscriptions/history').then((r) => r.data),
-  cancel: (reason?: string) =>
-    api.post('/subscriptions/cancel', { reason }).then((r) => r.data),
-  upgrade: (newPlanTier: string) =>
-    api.post('/subscriptions/upgrade', { newPlanTier }).then((r) => r.data),
+  getCurrent: <T = any>(): Promise<T> => api.get('/subscriptions/current').then((r) => unwrapResponseData<T>(r)),
+  getRenewalDate: <T = any>(): Promise<T> => api.get('/subscriptions/renewal-date').then((r) => unwrapResponseData<T>(r)),
+  getHistory: <T = any>(): Promise<T> => api.get('/subscriptions/history').then((r) => unwrapResponseData<T>(r)),
+  cancel: <T = any>(reason?: string): Promise<T> => api.post('/subscriptions/cancel', { reason }).then((r) => unwrapResponseData<T>(r)),
+  upgrade: <T = any>(newPlanTier: string): Promise<T> => api.post('/subscriptions/upgrade', { newPlanTier }).then((r) => unwrapResponseData<T>(r)),
 };
 
 export default api;

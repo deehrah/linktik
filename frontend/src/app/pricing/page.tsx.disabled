@@ -63,28 +63,5 @@ export default function PricingPage() {
     },
   ];
 
-  return (
-    <div className="min-h-screen bg-[#0F172A] text-white">
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <h1 className="text-4xl font-bold mb-6">Pricing</h1>
-        <p className="text-[#8E9CB1] mb-8">Simple pricing that scales with your needs.</p>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <div key={plan.name} className={`p-6 rounded-xl border ${plan.highlighted ? 'border-[#28C88C]' : 'border-[#334155]'} bg-[#1E293B]`}>
-              <h2 className="text-2xl font-semibold mb-2">{plan.name}</h2>
-              <p className="text-3xl font-bold text-[#28C88C] mb-4">{plan.price}</p>
-              <p className="text-[#8E9CB1] mb-4">{plan.description}</p>
-              <ul className="mb-6 text-sm text-[#8E9CB1] space-y-1">
-                {plan.features.map((f, i) => <li key={i}>• {f}</li>)}
-              </ul>
-              <Link href="/signup" className={`inline-block px-4 py-2 rounded-lg font-semibold ${plan.highlighted ? 'bg-[#28C88C] text-black' : 'border border-[#334155] text-white'}`}>
-                {plan.cta}
-              </Link>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
+  return null;
 }

@@ -19,7 +19,7 @@ interface AuthState {
   setAccessToken: (token: string) => void;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 const getErrorMessage = (error: unknown, fallback: string) => {
   if (axios.isAxiosError(error)) {
@@ -43,6 +43,8 @@ const getErrorMessage = (error: unknown, fallback: string) => {
   return fallback;
 };
 
+const getAuthData = (response: any) => response?.data?.data ?? response?.data;
+
 export const useAuth = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
@@ -57,16 +59,17 @@ export const useAuth = create<AuthState>((set) => ({
         name,
         password,
       });
+      const authData = getAuthData(response);
 
       set({
-        user: response.data.user,
-        accessToken: response.data.accessToken,
+        user: authData.user,
+        accessToken: authData.accessToken,
         isLoading: false,
       });
 
       // Store tokens in localStorage
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
+      localStorage.setItem('accessToken', authData.accessToken);
+      localStorage.setItem('refreshToken', authData.refreshToken);
     } catch (error: any) {
       const message = getErrorMessage(error, 'Signup failed');
       set({ error: message, isLoading: false });
@@ -81,16 +84,17 @@ export const useAuth = create<AuthState>((set) => ({
         email,
         password,
       });
+      const authData = getAuthData(response);
 
       set({
-        user: response.data.user,
-        accessToken: response.data.accessToken,
+        user: authData.user,
+        accessToken: authData.accessToken,
         isLoading: false,
       });
 
       // Store tokens in localStorage
-      localStorage.setItem('accessToken', response.data.accessToken);
-      localStorage.setItem('refreshToken', response.data.refreshToken);
+      localStorage.setItem('accessToken', authData.accessToken);
+      localStorage.setItem('refreshToken', authData.refreshToken);
     } catch (error: any) {
       const message = getErrorMessage(error, 'Login failed');
       set({ error: message, isLoading: false });
@@ -136,7 +140,7 @@ axios.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !config._retry &&
-      config.url !== `${API_BASE_URL}/api/auth/login`
+      config.url !== `${API_BASE_URL}/auth/login`
     ) {
       config._retry = true;
 
@@ -147,9 +151,10 @@ axios.interceptors.response.use(
         const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refreshToken,
         });
+        const authData = getAuthData(response);
 
-        localStorage.setItem('accessToken', response.data.accessToken);
-        config.headers.Authorization = `Bearer ${response.data.accessToken}`;
+        localStorage.setItem('accessToken', authData.accessToken);
+        config.headers.Authorization = `Bearer ${authData.accessToken}`;
 
         return axios(config);
       } catch (err) {
