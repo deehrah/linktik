@@ -52,7 +52,7 @@ export default function Home() {
     type();
 
     return () => clearTimeout(timeout);
-  }, [currentWordIndex, words]);
+  }, [currentWordIndex]);
 
   const handleShorten = async (e: React.FormEvent) => {
     e.preventDefault();

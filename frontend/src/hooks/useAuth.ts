@@ -21,6 +21,28 @@ interface AuthState {
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (axios.isAxiosError(error)) {
+    const responseError = error.response?.data?.error;
+
+    if (typeof responseError === 'string') {
+      return responseError;
+    }
+
+    if (responseError && typeof responseError === 'object') {
+      const typedError = responseError as { message?: string };
+      return typedError.message || fallback;
+    }
+
+    const responseMessage = error.response?.data?.message;
+    if (typeof responseMessage === 'string') {
+      return responseMessage;
+    }
+  }
+
+  return fallback;
+};
+
 export const useAuth = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
@@ -30,7 +52,7 @@ export const useAuth = create<AuthState>((set) => ({
   signup: async (email: string, name: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/signup`, {
+      const response = await axios.post(`${API_BASE_URL}/auth/signup`, {
         email,
         name,
         password,
@@ -46,7 +68,7 @@ export const useAuth = create<AuthState>((set) => ({
       localStorage.setItem('accessToken', response.data.accessToken);
       localStorage.setItem('refreshToken', response.data.refreshToken);
     } catch (error: any) {
-      const message = error.response?.data?.error || 'Signup failed';
+      const message = getErrorMessage(error, 'Signup failed');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -55,7 +77,7 @@ export const useAuth = create<AuthState>((set) => ({
   login: async (email: string, password: string) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password,
       });
@@ -70,7 +92,7 @@ export const useAuth = create<AuthState>((set) => ({
       localStorage.setItem('accessToken', response.data.accessToken);
       localStorage.setItem('refreshToken', response.data.refreshToken);
     } catch (error: any) {
-      const message = error.response?.data?.error || 'Login failed';
+      const message = getErrorMessage(error, 'Login failed');
       set({ error: message, isLoading: false });
       throw error;
     }
@@ -122,7 +144,7 @@ axios.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (!refreshToken) throw new Error('No refresh token');
 
-        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh`, {
+        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refreshToken,
         });
 
