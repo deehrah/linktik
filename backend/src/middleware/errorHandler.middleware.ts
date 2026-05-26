@@ -48,8 +48,6 @@ export const errorHandler = (
   const timestamp = new Date().toISOString();
   const path = req.path;
   const method = req.method;
-
-  // Zod validation errors
   if (err instanceof ZodError) {
     logger.warn('Validation error', { path, method, errors: err.errors });
     return res.status(400).json({
@@ -66,7 +64,25 @@ export const errorHandler = (
     } as ErrorResponse);
   }
 
-  // Prisma errors
+  // App errors (must check before Prisma to preserve custom messages)
+  if (err instanceof AppError) {
+    const level = err.statusCode >= 500 ? 'error' : 'info';
+    logger[level as 'error' | 'info']('Application error', {
+      statusCode: err.statusCode,
+      message: err.message,
+      code: err.code,
+      path,
+      method,
+    });
+
+    return res.status(err.statusCode).json({
+      success: false,
+      error: {
+        code: err.code || 'APP_ERROR',
+        message: err.message,
+      },
+    } as ErrorResponse);
+  }
   if (err instanceof Prisma.PrismaClientKnownRequestError) {
     logger.warn('Prisma error', { code: err.code, path, method });
 
@@ -112,25 +128,6 @@ export const errorHandler = (
     }
   }
 
-  // App errors
-  if (err instanceof AppError) {
-    const level = err.statusCode >= 500 ? 'error' : 'info';
-    logger[level as 'error' | 'info']('Application error', {
-      statusCode: err.statusCode,
-      message: err.message,
-      path,
-      method,
-    });
-
-    return res.status(err.statusCode).json({
-      success: false,
-      error: {
-        code: err.code || 'APP_ERROR',
-        message: err.message,
-      },
-    } as ErrorResponse);
-  }
-
   // Syntax errors (malformed JSON, etc.)
   if (err instanceof SyntaxError) {
     logger.warn('Syntax error', { message: err.message, path });
@@ -139,6 +136,23 @@ export const errorHandler = (
       error: {
         code: 'SYNTAX_ERROR',
         message: 'Malformed request',
+      },
+    } as ErrorResponse);
+  }
+
+  // Generic errors from services (preserve custom messages)
+  if (err instanceof Error && err.message) {
+    logger.warn('Service error with custom message', {
+      message: err.message,
+      path,
+      method,
+    });
+    
+    return res.status(400).json({
+      success: false,
+      error: {
+        code: 'SERVICE_ERROR',
+        message: err.message,
       },
     } as ErrorResponse);
   }

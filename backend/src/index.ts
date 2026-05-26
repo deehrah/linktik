@@ -1,21 +1,40 @@
 import 'dotenv/config';
+import 'module-alias/register';
+console.log('STARTUP: 1 - dotenv loaded');
+
+// Global error handlers - set up FIRST
+process.on('unhandledRejection', (reason: any) => {
+  console.error('UNHANDLED REJECTION:', reason);
+  process.exit(1);
+});
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('UNCAUGHT EXCEPTION:', error.message);
+  console.error(error.stack);
+  process.exit(1);
+});
+
+console.log('STARTUP: 2 - error handlers registered');
+
 import express, { Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import env from './config/env';
-import { logger } from './lib/logger';
+// import { logger } from './lib/logger';
+import { prisma } from './lib/prisma';
+// import { redis } from './lib/redis';
 import { sanitizeInput } from './middleware/sanitize.middleware';
 import authRoutes from './routes/auth.routes';
-import linkRoutes from './routes/link.routes';
-import qrcodeRoutes from './routes/qrcode.routes';
-import analyticsRoutes from './routes/analytics.routes';
-import paymentRoutes from './routes/payment.routes';
-import subscriptionRoutes from './routes/subscription.routes';
-import eventRoutes from './routes/event.routes';
-import ticketRoutes from './routes/tickets.routes';
-import webhookRoutes from './routes/webhook.routes';
-import redirectRoutes from './routes/redirect.routes';
+// import linkRoutes from './routes/link.routes';
+// import qrcodeRoutes from './routes/qrcode.routes';
+// import analyticsRoutes from './routes/analytics.routes';
+// import paymentRoutes from './routes/payment.routes';
+// import subscriptionRoutes from './routes/subscription.routes';
+// import eventRoutes from './routes/event.routes';
+// import ticketRoutes from './routes/tickets.routes';
+// import webhookRoutes from './routes/webhook.routes';
+// import redirectRoutes from './routes/redirect.routes';
 import { authMiddleware } from './middleware/auth.middleware';
 import {
   errorHandler,
@@ -26,6 +45,20 @@ import {
   apiLimiter,
   redirectLimiter,
 } from './middleware/rateLimit.middleware';
+
+// Global error handlers
+process.on('unhandledRejection', (reason: any) => {
+  console.error('UNHANDLED REJECTION:', reason);
+  process.exit(1);
+});
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('UNCAUGHT EXCEPTION:', error.message);
+  console.error(error.stack);
+  process.exit(1);
+});
+
+console.log('DEBUG: All imports complete, creating app...');
 
 const app = express();
 
@@ -82,19 +115,19 @@ app.get('/api-docs', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/links', apiLimiter, authMiddleware, linkRoutes);
-app.use('/api/qrcodes', apiLimiter, authMiddleware, qrcodeRoutes);
-app.use('/api/analytics', apiLimiter, authMiddleware, analyticsRoutes);
-app.use('/api/payments', apiLimiter, authMiddleware, paymentRoutes);
-app.use('/api/subscriptions', apiLimiter, authMiddleware, subscriptionRoutes);
-app.use('/api/events', apiLimiter, eventRoutes);
-app.use('/api/tickets', apiLimiter, ticketRoutes);
+// app.use('/api/links', apiLimiter, authMiddleware, linkRoutes);
+// app.use('/api/qrcodes', apiLimiter, authMiddleware, qrcodeRoutes);
+// app.use('/api/analytics', apiLimiter, authMiddleware, analyticsRoutes);
+// app.use('/api/payments', apiLimiter, authMiddleware, paymentRoutes);
+// app.use('/api/subscriptions', apiLimiter, authMiddleware, subscriptionRoutes);
+// app.use('/api/events', apiLimiter, eventRoutes);
+// app.use('/api/tickets', apiLimiter, ticketRoutes);
 
 // Public Webhook Routes (no auth required)
-app.use('/webhooks', webhookRoutes);
+// app.use('/webhooks', webhookRoutes);
 
 // Public redirect routes (must be after API routes)
-app.use('/', redirectLimiter, redirectRoutes);
+// app.use('/', redirectLimiter, redirectRoutes);
 
 // Test endpoint to verify routes are loaded
 app.get('/api/test', authMiddleware, (req: Request, res: Response) => {
@@ -121,13 +154,19 @@ app.use((req: Request, res: Response) => {
 // Global error handler (must be last)
 app.use(errorHandler);
 
-const PORT = parseInt(env.PORT, 10) || 5000;
+console.log('About to start server on port...');
 
+// Start server
+const PORT = parseInt(env.PORT, 10) || 5000;
+console.log(`Starting server on port ${PORT}`);
 app.listen(PORT, () => {
-  logger.info(`🚀 Server running on http://localhost:${PORT}`);
-  logger.info(`📚 API Docs: http://localhost:${PORT}/api-docs`);
-  logger.info(`💚 Health: http://localhost:${PORT}/health`);
-  logger.info(`Environment: ${env.NODE_ENV}`);
+  console.log(`\n🚀 Server running on http://localhost:${PORT}`);
+  console.log(`📚 API Docs: http://localhost:${PORT}/api-docs`);
+  console.log(`💚 Health: http://localhost:${PORT}/health`);
+  console.log(`Environment: ${env.NODE_ENV}`);
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 });
+
+console.log('Server listen() called, waiting for connections...');
 
 export default app;

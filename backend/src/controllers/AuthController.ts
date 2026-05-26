@@ -4,8 +4,8 @@ import {
   signupSchema,
   loginSchema,
   refreshSchema,
-} from '@/services/AuthService';
-import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware';
+} from '../services/AuthService';
+import { asyncHandler, AppError } from '../middleware/errorHandler.middleware';
 
 const authService = new AuthService();
 

@@ -1,58 +1,48 @@
 import rateLimit from 'express-rate-limit';
-import RedisStore from 'rate-limit-redis';
-import redis from '../lib/redis';
+import RedisStore, { type RedisReply } from 'rate-limit-redis';
+import { redis } from '../lib/redis';
 
-// Auth endpoints - strict limit (5 attempts per 15 minutes)
-export const authLimiter = rateLimit({
-  store: new (RedisStore as any)({
-    client: redis,
-    prefix: 'rl:auth:',
-  }),
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 attempts
-  message: 'Too many login attempts, please try again after 15 minutes',
+const commonOptions = {
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'test',
+  skip: (req: any) => process.env.NODE_ENV === 'test',
+};
+
+const createRedisStore = (prefix: string) =>
+  new RedisStore({
+    prefix,
+    sendCommand: async (command: string, ...args: string[]) =>
+      redis.call(command, ...args) as Promise<RedisReply>,
+  });
+
+export const authLimiter = rateLimit({
+  // Use Redis-backed store in production; fall back to the default in-memory
+  // store during development to avoid Redis init warnings locally.
+  store: process.env.NODE_ENV === 'production' ? createRedisStore('rl:auth:') : undefined,
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: 'Too many login attempts, please try again later',
+  ...commonOptions,
 });
 
-// API endpoints - moderate limit (100 requests per minute)
 export const apiLimiter = rateLimit({
-  store: new (RedisStore as any)({
-    client: redis,
-    prefix: 'rl:api:',
-  }),
-  windowMs: 60 * 1000, // 1 minute
+  store: process.env.NODE_ENV === 'production' ? createRedisStore('rl:api:') : undefined,
+  windowMs: 60 * 1000,
   max: 100,
   message: 'Too many requests, please slow down',
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'test',
+  ...commonOptions,
 });
 
-// Redirect endpoint - very permissive (1000 per minute, as these are public)
 export const redirectLimiter = rateLimit({
-  store: new (RedisStore as any)({
-    client: redis,
-    prefix: 'rl:redirect:',
-  }),
+  store: process.env.NODE_ENV === 'production' ? createRedisStore('rl:redirect:') : undefined,
   windowMs: 60 * 1000,
   max: 1000,
-  message: 'Rate limit exceeded for redirects',
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'test',
+  ...commonOptions,
 });
 
-// Webhook endpoint - special handling for Paystack signatures
 export const webhookLimiter = rateLimit({
-  store: new (RedisStore as any)({
-    client: redis,
-    prefix: 'rl:webhook:',
-  }),
+  store: process.env.NODE_ENV === 'production' ? createRedisStore('rl:webhook:') : undefined,
   windowMs: 60 * 1000,
   max: 500,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skip: (req) => process.env.NODE_ENV === 'test',
+  ...commonOptions,
 });
