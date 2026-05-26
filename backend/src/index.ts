@@ -102,6 +102,8 @@ app.get('/api-docs', (req: Request, res: Response) => {
 
 // API Routes
 app.use('/api/auth', authLimiter, authRoutes);
+// Backwards-compatible alias: some clients call /api/users/* (e.g. /api/users/profile)
+app.use('/api/users', authLimiter, authRoutes);
 app.use('/api/links', apiLimiter, authMiddleware, linkRoutes);
 app.use('/api/qrcodes', apiLimiter, authMiddleware, qrcodeRoutes);
 app.use('/api/analytics', apiLimiter, authMiddleware, analyticsRoutes);
