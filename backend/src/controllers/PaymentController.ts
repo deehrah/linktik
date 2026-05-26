@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
-import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware'
-import { PaymentService } from '@/services/PaymentService'
-import { logger } from '@/lib/logger'
+import { asyncHandler, AppError } from '../middleware/errorHandler.middleware'
+import { PaymentService } from '../services/PaymentService'
+import { logger } from '../lib/logger'
 
 /**
  * PaymentController

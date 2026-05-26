@@ -25,6 +25,43 @@ export interface ErrorResponse {
   };
 }
 
+const inferStatusCodeFromMessage = (message: string) => {
+  const normalizedMessage = message.toLowerCase();
+
+  if (normalizedMessage.includes('not found')) {
+    return 404;
+  }
+
+  if (
+    normalizedMessage.includes('unauthorized') ||
+    normalizedMessage.includes('authentication required') ||
+    normalizedMessage.includes('invalid token') ||
+    normalizedMessage.includes('token expired')
+  ) {
+    return 401;
+  }
+
+  if (normalizedMessage.includes('forbidden') || normalizedMessage.includes('permission')) {
+    return 403;
+  }
+
+  if (
+    normalizedMessage.includes('already exists') ||
+    normalizedMessage.includes('already registered')
+  ) {
+    return 409;
+  }
+
+  return 400;
+};
+
+const getPrismaNotFoundMessage = (err: Prisma.PrismaClientKnownRequestError) => {
+  const modelName = err.meta?.modelName as string | undefined;
+  const resourceName = modelName ? modelName.replace(/([a-z])([A-Z])/g, '$1 $2') : 'resource';
+
+  return `${resourceName.charAt(0).toUpperCase()}${resourceName.slice(1)} not found`;
+};
+
 // Extend Express Request to include user
 declare global {
   namespace Express {
@@ -103,7 +140,7 @@ export const errorHandler = (
           success: false,
           error: {
             code: 'NOT_FOUND',
-            message: 'The requested resource was not found',
+            message: getPrismaNotFoundMessage(err),
           },
         } as ErrorResponse);
 
@@ -142,16 +179,28 @@ export const errorHandler = (
 
   // Generic errors from services (preserve custom messages)
   if (err instanceof Error && err.message) {
+    const statusCode = inferStatusCodeFromMessage(err.message);
+
     logger.warn('Service error with custom message', {
+      statusCode,
       message: err.message,
       path,
       method,
     });
-    
-    return res.status(400).json({
+
+    return res.status(statusCode).json({
       success: false,
       error: {
-        code: 'SERVICE_ERROR',
+        code:
+          statusCode === 404
+            ? 'NOT_FOUND'
+            : statusCode === 401
+              ? 'UNAUTHORIZED'
+              : statusCode === 403
+                ? 'FORBIDDEN'
+                : statusCode === 409
+                  ? 'CONFLICT'
+                  : 'SERVICE_ERROR',
         message: err.message,
       },
     } as ErrorResponse);

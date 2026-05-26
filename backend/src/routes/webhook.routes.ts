@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
-import { PaystackService } from '@/lib/paystack'
-import { PaymentService } from '@/services/PaymentService'
-import { logger } from '@/lib/logger'
+import { PaystackService } from '../lib/paystack'
+import { PaymentService } from '../services/PaymentService'
+import { logger } from '../lib/logger'
 
 const router = Router()
 
@@ -110,7 +110,7 @@ async function handlePaymentSuccess(data: any) {
     })
 
     // Find and update payment record
-    const { prisma } = await import('@/lib/prisma.js')
+    const { prisma } = await import('../lib/prisma.js')
 
     const payment = await prisma.payment.findFirst({
       where: { reference },
@@ -193,7 +193,7 @@ async function handlePaymentFailure(data: any) {
       status,
     })
 
-    const { prisma } = await import('@/lib/prisma.js')
+    const { prisma } = await import('../lib/prisma.js')
 
     // Update payment status to failed
     await prisma.payment.updateMany({

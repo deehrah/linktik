@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
-import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware'
-import EventService from '@/services/EventService'
+import { asyncHandler, AppError } from '../middleware/errorHandler.middleware'
+import EventService from '../services/EventService'
 
 /**
  * EventController

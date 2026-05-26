@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
-import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware'
-import { SubscriptionService } from '@/services/SubscriptionService'
-import { logger } from '@/lib/logger'
+import { asyncHandler, AppError } from '../middleware/errorHandler.middleware'
+import { SubscriptionService } from '../services/SubscriptionService'
+import { logger } from '../lib/logger'
 
 /**
  * SubscriptionController
@@ -19,7 +19,7 @@ export class SubscriptionController {
         throw new AppError(401, 'Unauthorized')
       }
 
-      const { prisma } = await import('@/lib/prisma.js')
+      const { prisma } = await import('../lib/prisma.js')
 
       const subscription = await prisma.subscription.findFirst({
         where: { userId, status: 'active' },
@@ -58,7 +58,7 @@ export class SubscriptionController {
 
       const { reason } = req.body
 
-      const { prisma } = await import('@/lib/prisma.js')
+      const { prisma } = await import('../lib/prisma.js')
 
       // Find active subscription
       const subscription = await prisma.subscription.findFirst({
@@ -109,7 +109,7 @@ export class SubscriptionController {
         throw new AppError(400, 'Invalid plan tier')
       }
 
-      const { prisma } = await import('@/lib/prisma.js')
+      const { prisma } = await import('../lib/prisma.js')
 
       // Find active subscription
       const subscription = await prisma.subscription.findFirst({
@@ -187,7 +187,7 @@ export class SubscriptionController {
       throw new AppError(401, 'Unauthorized')
     }
 
-    const { prisma } = await import('@/lib/prisma.js')
+    const { prisma } = await import('../lib/prisma.js')
 
     const subscription = await prisma.subscription.findFirst({
       where: { userId, status: 'active' },
@@ -229,7 +229,7 @@ export class SubscriptionController {
         throw new AppError(401, 'Unauthorized')
       }
 
-      const { prisma } = await import('@/lib/prisma.js')
+      const { prisma } = await import('../lib/prisma.js')
 
       const subscriptions = await prisma.subscription.findMany({
         where: { userId },
@@ -239,7 +239,7 @@ export class SubscriptionController {
 
       res.status(200).json({
         success: true,
-        data: subscriptions.map((sub) => ({
+        data: subscriptions.map((sub: any) => ({
           id: sub.id,
           planTier: sub.planTier,
           status: sub.status,

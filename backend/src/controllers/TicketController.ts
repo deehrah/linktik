@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
-import { asyncHandler, AppError } from '@/middleware/errorHandler.middleware'
-import TicketService from '@/services/TicketService'
+import { asyncHandler, AppError } from '../middleware/errorHandler.middleware'
+import TicketService from '../services/TicketService'
 
 /**
  * TicketController

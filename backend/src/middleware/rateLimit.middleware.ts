@@ -20,7 +20,7 @@ export const authLimiter = rateLimit({
   // store during development to avoid Redis init warnings locally.
   store: process.env.NODE_ENV === 'production' ? createRedisStore('rl:auth:') : undefined,
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: process.env.NODE_ENV === 'production' ? 5 : 50,
   message: 'Too many login attempts, please try again later',
   ...commonOptions,
 });

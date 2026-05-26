@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import QRCode from 'qrcode'
-import { logger } from '@/lib/logger'
+import { logger } from '../lib/logger'
 
 const prisma = new PrismaClient()
 

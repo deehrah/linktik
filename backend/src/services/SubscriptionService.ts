@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-import { PaystackService } from '@/lib/paystack'
-import { logger } from '@/lib/logger'
+import { PaystackService } from '../lib/paystack'
+import { logger } from '../lib/logger'
 
 const prisma = new PrismaClient()
 
