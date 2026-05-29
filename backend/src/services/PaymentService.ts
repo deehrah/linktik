@@ -1,9 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { PaystackService } from '../lib/paystack';
 import { logger } from '../lib/logger';
 import { PLAN_FEATURES } from '../config/constants';
-
-const prisma = new PrismaClient();
 
 interface CreatePaymentParams {
   userId: string;

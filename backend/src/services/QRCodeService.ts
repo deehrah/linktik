@@ -1,11 +1,9 @@
 import QRCode from 'qrcode';
 import sharp from 'sharp';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { uploadToCloudinary, deleteFromCloudinary } from '../lib/cloudinary';
 import { logger } from '../lib/logger';
 import { PLAN_FEATURES } from '../config/constants';
-
-const prisma = new PrismaClient();
 
 interface GenerateQROptions {
   data: string;

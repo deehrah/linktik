@@ -1,14 +1,18 @@
-import { PrismaClient, EventStatus } from '@prisma/client'
+import { EventStatus } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 import { logger } from '../lib/logger'
+import { QRCodeService } from './QRCodeService'
+import { LinkService } from './LinkService'
 
-const prisma = new PrismaClient()
+const linkService = new LinkService()
 
 interface CreateEventParams {
   organizerId: string
   name: string
   slug: string
   description?: string
-  dateTime: Date
+  startDate: Date
+  endDate: Date
   venueName: string
   venueAddress?: string
   capacity?: number
@@ -42,6 +46,12 @@ interface UpdateEventParams {
  * Manages event lifecycle: creation, ticket types, capacity, status
  */
 export class EventService {
+  private static validateEventDates(startDate: Date, endDate: Date): void {
+    if (new Date(endDate) <= new Date(startDate)) {
+      throw new Error('End date must be after start date')
+    }
+  }
+
   /**
    * Create a new event
    */
@@ -52,13 +62,16 @@ export class EventService {
         name,
         slug,
         description,
-        dateTime,
+        startDate,
+        endDate,
         venueName,
         venueAddress,
         capacity,
         category,
         posterUrl,
       } = params
+
+      this.validateEventDates(startDate, endDate)
 
       // Check if slug is unique
       const existingEvent = await prisma.event.findFirst({
@@ -76,7 +89,7 @@ export class EventService {
           name,
           slug,
           description,
-          dateTime,
+          dateTime: startDate,
           venueName,
           venueAddress,
           capacity,
@@ -94,7 +107,29 @@ export class EventService {
         slug,
       })
 
-      return event
+      let eventLink = null
+      try {
+        eventLink = await linkService.createLink(organizerId, {
+          originalUrl: `${process.env.APP_URL || 'http://localhost:3000'}/e/${slug}`,
+          title: `Event: ${name}`,
+        })
+      } catch (error) {
+        console.warn('Link generation failed', error)
+      }
+
+      let eventQRCode = null
+      try {
+        eventQRCode = await QRCodeService.generateQRCode(organizerId, {
+          data: eventLink?.shortUrl || `${process.env.APP_URL || 'http://localhost:3000'}/e/${slug}`,
+          size: 500,
+          format: 'png',
+          errorCorrection: 'H',
+        })
+      } catch (error) {
+        console.warn('QR generation failed', error)
+      }
+
+      return { ...event, eventLink, eventQRCode }
     } catch (error) {
       logger.error('Failed to create event', { error })
       throw error

@@ -12,10 +12,23 @@ export class EventController {
    * Create a new event
    */
   static createEvent = asyncHandler(async (req: Request, res: Response) => {
-    const { name, slug, description, dateTime, venueName, venueAddress, capacity, category, posterUrl } =
-      req.body
+    const {
+      name,
+      slug,
+      description,
+      startDate,
+      endDate,
+      dateTime,
+      venueName,
+      venueAddress,
+      capacity,
+      category,
+      posterUrl,
+    } = req.body
 
-    if (!name || !slug || !dateTime || !venueName) {
+    const normalizedStartDate = startDate || dateTime
+
+    if (!name || !slug || !normalizedStartDate || !endDate || !venueName) {
       throw new AppError(400, 'Missing required fields')
     }
 
@@ -28,7 +41,8 @@ export class EventController {
       name,
       slug,
       description,
-      dateTime: new Date(dateTime),
+      startDate: new Date(normalizedStartDate),
+      endDate: new Date(endDate),
       venueName,
       venueAddress,
       capacity: capacity ? Number(capacity) : undefined,

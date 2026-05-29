@@ -18,10 +18,32 @@ interface QRCodeData {
   };
 }
 
+interface QRCodeFormState {
+  data: string;
+  fgColor: string;
+  bgColor: string;
+  size: string;
+  format: 'png' | 'svg' | 'pdf';
+  errorCorrection: 'L' | 'M' | 'Q' | 'H';
+}
+
+const defaultFormState: QRCodeFormState = {
+  data: '',
+  fgColor: '#000000',
+  bgColor: '#FFFFFF',
+  size: '500',
+  format: 'png',
+  errorCorrection: 'H',
+}
+
 export default function QRCodesPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [qrCodes, setQrCodes] = useState<QRCodeData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [createdQRCode, setCreatedQRCode] = useState<QRCodeData | null>(null);
+  const [form, setForm] = useState<QRCodeFormState>(defaultFormState);
 
   useEffect(() => {
     fetchQRCodes();
@@ -36,6 +58,48 @@ export default function QRCodesPage() {
       console.error('Error fetching QR codes:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const resetCreateForm = () => {
+    setForm(defaultFormState);
+    setError(null);
+    setCreatedQRCode(null);
+  };
+
+  const closeCreateModal = () => {
+    setShowCreateModal(false);
+    resetCreateForm();
+  };
+
+  const handleCreateQRCode = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!form.data.trim()) {
+      setError('Please enter a destination URL.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setError(null);
+
+      const created = await qrCodesApi.create<QRCodeData>({
+        data: form.data.trim(),
+        fgColor: form.fgColor,
+        bgColor: form.bgColor,
+        size: Number(form.size),
+        format: form.format,
+        errorCorrection: form.errorCorrection,
+      });
+
+      setCreatedQRCode(created);
+      setQrCodes((current) => [created, ...current]);
+      await fetchQRCodes();
+    } catch (error: any) {
+      setError(error?.response?.data?.message || 'Failed to generate QR code.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -173,7 +237,7 @@ export default function QRCodesPage() {
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-bold text-white">Generate QR Code</h3>
               <button
-                onClick={() => setShowCreateModal(false)}
+                onClick={closeCreateModal}
                 className="text-[#8E9CB1] hover:text-white transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +246,7 @@ export default function QRCodesPage() {
               </button>
             </div>
 
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleCreateQRCode}>
               <div>
                 <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
                   Destination URL
@@ -190,56 +254,129 @@ export default function QRCodesPage() {
                 <input
                   type="url"
                   placeholder="https://example.com"
+                  value={form.data}
+                  onChange={(event) => setForm((current) => ({ ...current, data: event.target.value }))}
                   className="w-full px-4 py-3 bg-[#0F172A] border border-[#334155] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#28C88C] focus:border-transparent text-white placeholder-[#8E9CB1]"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
-                  QR Code Name
-                </label>
-                <input
-                  type="text"
-                  placeholder="My QR Code"
-                  className="w-full px-4 py-3 bg-[#0F172A] border border-[#334155] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#28C88C] focus:border-transparent text-white placeholder-[#8E9CB1]"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
+                    Foreground Color
+                  </label>
+                  <input
+                    type="color"
+                    value={form.fgColor}
+                    onChange={(event) => setForm((current) => ({ ...current, fgColor: event.target.value }))}
+                    className="w-full h-12 bg-[#0F172A] border border-[#334155] rounded-xl cursor-pointer"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
+                    Background Color
+                  </label>
+                  <input
+                    type="color"
+                    value={form.bgColor}
+                    onChange={(event) => setForm((current) => ({ ...current, bgColor: event.target.value }))}
+                    className="w-full h-12 bg-[#0F172A] border border-[#334155] rounded-xl cursor-pointer"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
-                  Foreground Color
-                </label>
-                <input
-                  type="color"
-                  defaultValue="#000000"
-                  className="w-full h-12 bg-[#0F172A] border border-[#334155] rounded-xl cursor-pointer"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
+                    Size
+                  </label>
+                  <select
+                    value={form.size}
+                    onChange={(event) => setForm((current) => ({ ...current, size: event.target.value }))}
+                    className="w-full px-4 py-3 bg-[#0F172A] border border-[#334155] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#28C88C] text-white"
+                  >
+                    <option value="256">256 px</option>
+                    <option value="384">384 px</option>
+                    <option value="500">500 px</option>
+                    <option value="750">750 px</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
+                    Format
+                  </label>
+                  <select
+                    value={form.format}
+                    onChange={(event) => setForm((current) => ({ ...current, format: event.target.value as QRCodeFormState['format'] }))}
+                    className="w-full px-4 py-3 bg-[#0F172A] border border-[#334155] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#28C88C] text-white"
+                  >
+                    <option value="png">PNG</option>
+                    <option value="svg">SVG</option>
+                    <option value="pdf">PDF</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
+                    Error Correction
+                  </label>
+                  <select
+                    value={form.errorCorrection}
+                    onChange={(event) => setForm((current) => ({ ...current, errorCorrection: event.target.value as QRCodeFormState['errorCorrection'] }))}
+                    className="w-full px-4 py-3 bg-[#0F172A] border border-[#334155] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#28C88C] text-white"
+                  >
+                    <option value="L">L</option>
+                    <option value="M">M</option>
+                    <option value="Q">Q</option>
+                    <option value="H">H</option>
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-[#F1F5F9] mb-2">
-                  Background Color
-                </label>
-                <input
-                  type="color"
-                  defaultValue="#FFFFFF"
-                  className="w-full h-12 bg-[#0F172A] border border-[#334155] rounded-xl cursor-pointer"
-                />
-              </div>
+              {error && (
+                <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                  {error}
+                </div>
+              )}
+
+              {createdQRCode && (
+                <div className="rounded-2xl border border-[#334155] bg-[#0F172A] p-4 space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Latest QR code</p>
+                      <p className="text-xs text-[#8E9CB1] truncate">{createdQRCode.data}</p>
+                    </div>
+                    <a
+                      href={createdQRCode.imageUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-medium text-[#28C88C] hover:text-[#24B37D]"
+                    >
+                      Open image
+                    </a>
+                  </div>
+                  <div className="flex items-center justify-center rounded-xl bg-white p-4">
+                    <img src={createdQRCode.imageUrl} alt="Generated QR code" className="h-48 w-48 object-contain" />
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => setShowCreateModal(false)}
+                  onClick={closeCreateModal}
                   className="flex-1 px-4 py-3 border border-[#334155] text-white rounded-xl font-semibold hover:border-[#28C88C] transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-4 py-3 bg-[#28C88C] hover:bg-[#24B37D] text-white rounded-xl font-semibold transition-colors"
+                  disabled={submitting}
+                  className="flex-1 px-4 py-3 bg-[#28C88C] hover:bg-[#24B37D] disabled:bg-[#8E9CB1] text-white rounded-xl font-semibold transition-colors"
                 >
-                  Generate
+                  {submitting ? 'Generating...' : 'Generate'}
                 </button>
               </div>
             </form>

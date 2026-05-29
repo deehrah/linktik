@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import geoip from 'geoip-lite';
 import { UAParser } from 'ua-parser-js';
-
-const prisma = new PrismaClient();
 
 interface ClickData {
   linkId: string;

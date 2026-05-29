@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 import { PaystackService } from '../lib/paystack'
 import { logger } from '../lib/logger'
-
-const prisma = new PrismaClient()
 
 interface CreateSubscriptionParams {
   userId: string

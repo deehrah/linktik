@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '../lib/prisma'
 import QRCode from 'qrcode'
 import { logger } from '../lib/logger'
-
-const prisma = new PrismaClient()
 
 interface CreateOrderParams {
   eventId: string

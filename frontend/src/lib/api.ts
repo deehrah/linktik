@@ -133,7 +133,17 @@ export const linksApi = {
 export const qrCodesApi = {
   getAll: <T = any>(): Promise<T> => api.get('/qrcodes').then((r) => unwrapResponseData<T>(r)),
   getOne: <T = any>(id: string): Promise<T> => api.get(`/qrcodes/${id}`).then((r) => unwrapResponseData<T>(r)),
-  create: <T = any>(data: { data: string; linkId?: string; fgColor?: string; bgColor?: string }): Promise<T> =>
+  create: <T = any>(data: {
+    data: string;
+    linkId?: string;
+    fgColor?: string;
+    bgColor?: string;
+    size?: number;
+    format?: 'png' | 'svg' | 'pdf';
+    logoUrl?: string;
+    logoSize?: number;
+    errorCorrection?: 'L' | 'M' | 'Q' | 'H';
+  }): Promise<T> =>
     api.post('/qrcodes', data).then((r) => unwrapResponseData<T>(r)),
   update: <T = any>(id: string, data: { fgColor?: string; bgColor?: string }): Promise<T> =>
     api.put(`/qrcodes/${id}`, data).then((r) => unwrapResponseData<T>(r)),
@@ -163,7 +173,18 @@ export const eventsApi = {
   getAll: <T = any>(page = 1, limit = 20): Promise<T> =>
     api.get('/events', { params: { page, limit } }).then((r) => unwrapResponseData<T>(r)),
   getOne: <T = any>(id: string): Promise<T> => api.get(`/events/${id}`).then((r) => unwrapResponseData<T>(r)),
-  create: <T = any>(data: any): Promise<T> => api.post('/events', data).then((r) => unwrapResponseData<T>(r)),
+  create: <T = any>(data: {
+    name: string;
+    slug: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    venueName: string;
+    venueAddress?: string;
+    capacity?: number;
+    category?: string;
+    posterUrl?: string;
+  }): Promise<T> => api.post('/events/create', data).then((r) => unwrapResponseData<T>(r)),
   update: <T = any>(id: string, data: any): Promise<T> => api.put(`/events/${id}`, data).then((r) => unwrapResponseData<T>(r)),
   delete: <T = any>(id: string): Promise<T> => api.delete(`/events/${id}`).then((r) => unwrapResponseData<T>(r)),
 };
